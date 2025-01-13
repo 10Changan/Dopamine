@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>习惯养成打卡</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #6200ea;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .container {
+            padding: 1rem;
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-group button {
+            background-color: #6200ea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #3700b3;
+        }
+
+        .habit-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .habit-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .habit-list .delete-habit {
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .habit-list .delete-habit:hover {
+            background-color: #e64a19;
+        }
+
+        .collapsible {
+            background-color: #6200ea;
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 1rem;
+            text-align: left;
+            border: none;
+            outline: none;
+            width: 100%;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .collapsible:hover {
+            background-color: #3700b3;
+        }
+
+        .content {
+            display: none;
+            overflow: hidden;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .clear-stats {
+            margin-top: 1rem;
+            background-color: #cccccc;
+            color: black;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .clear-stats:hover {
+            background-color: #aaaaaa;
+        }
+
+        .logout-button {
+            margin-top: 1rem;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .logout-button:hover {
+            background-color: #b71c1c;
+        }
+
+        .delete-button {
+            margin-top: 1rem;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>习惯养成打卡</h1>
+    </header>
+
+    <div class="container" id="authContainer">
+        <h2>注册或登录</h2>
+        <div class="form-group">
+            <input type="text" id="username" placeholder="输入用户名" required>
+        </div>
+        <div class="form-group">
+            <input type="text" id="nickname" placeholder="输入昵称" required>
+        </div>
+        <div class="form-group">
+            <button id="authButton">开始使用</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <h2>欢迎，<span id="userNickname"></span>!</h2>
+        <h2>添加习惯</h2>
+        <form class="habit-form" id="habitForm">
+            <input type="text" id="habitInput" placeholder="输入你的习惯..." required>
+            <button type="submit">添加</button>
+        </form>
+
+        <h2>每日打卡</h2>
+        <ul class="habit-list" id="habitList">
+            <!-- 动态生成习惯列表 -->
+        </ul>
+
+        <button class="collapsible">历史记录</button>
+        <div class="content" id="historyContent">
+            <ul id="historyList">
+                <!-- 动态生成历史记录 -->
+            </ul>
+        </div>
+
+        <button class="collapsible">近一个月统计</button>
+        <div class="content" id="monthlyContent">
+            <ul id="monthlyStats">
+                <!-- 动态生成月度统计 -->
+            </ul>
+            <button class="clear-stats" id="clearMonthlyStats">清零近一个月统计</button>
+        </div>
+
+        <h2>其他用户的打卡情况</h2>
+        <ul id="otherUsersStats">
+            <!-- 动态生成其他用户的打卡情况 -->
+        </ul>
+
+        <button class="logout-button" id="logoutButton">退出登录</button>
+        <button class="delete-button" id="deleteAccountButton">删除账户</button>
+    </div>
+
+    <script>
+        const authContainer = document.getElementById('authContainer');
+        const mainContainer = document.getElementById('mainContainer');
+        const usernameInput = document.getElementById('username');
+        const nicknameInput = document.getElementById('nickname');
+        const authButton = document.getElementById('authButton');
+        const userNickname = document.getElementById('userNickname');
+        const habitForm = document.getElementById('habitForm');
+        const habitInput = document.getElementById('habitInput');
+        const habitList = document.getElementById('habitList');
+        const historyList = document.getElementById('historyList');
+        const monthlyStats = document.getElementById('monthlyStats');
+        const otherUsersStats = document.getElementById('otherUsersStats');
+        const logoutButton = document.getElementById('logoutButton');
+        const deleteAccountButton = document.getElementById('deleteAccountButton');
+        const clearMonthlyStatsButton = document.getElementById('clearMonthlyStats');
+
+        const collapsibles = document.querySelectorAll('.collapsible');
+
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+
+        collapsibles.forEach(button => {
+            button.addEventListener('click', function () {
+                this.classList.toggle('active');
+                const content = this.nextElementSibling;
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                } else {
+                    content.style.display = 'block';
+                }
+            });
+        });
+
+        function updateUserState() {
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', currentUser);
+        }
+
+        // 自动登录上次的用户
+        currentUser = localStorage.getItem('currentUser');
+        if (currentUser && users[currentUser]) {
+            userNickname.textContent = users[currentUser].nickname;
+            authContainer.style.display = 'none';
+            mainContainer.style.display = 'block';
+            renderHabits();
+            renderHistory();
+            renderMonthlyStats();
+            renderOtherUsersStats();
+        }
+
+        authButton.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            const nickname = nicknameInput.value.trim();
+
+            if (!username || !nickname) {
+                alert('用户名或昵称不能为空！');
+                return;
+            }
+
+            if (!users[username]) {
+                users[username] = {
+                    nickname: nickname,
+                    habits: [],
+                    history: []
+                };
+            }
+
+            currentUser = username;
+            userNickname.textContent = users[currentUser].nickname;
+            authContainer.style.display = 'none';
+            mainContainer.style.display = 'block';
+            updateUserState();
+            renderHabits();
+            renderHistory();
+            renderMonthlyStats();
+            renderOtherUsersStats();
+        });
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            mainContainer.style.display = 'none';
+            authContainer.style.display = 'block';
+            usernameInput.value = '';
+            nicknameInput.value = '';
+        });
+
+        deleteAccountButton.addEventListener('click', () => {
+            if (confirm('确定要删除您的账户吗？此操作无法撤销！')) {
+                delete users[currentUser];
+                updateUserState();
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                mainContainer.style.display = 'none';
+                authContainer.style.display = 'block';
+                usernameInput.value = '';
+                nicknameInput.value = '';
+                alert('账户已删除');
+            }
+        });
+
+        habitForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const habitName = habitInput.value.trim();
+            if (!habitName) {
+                alert('习惯名称不能为空！');
+                return;
+            }
+            users[currentUser].habits.push({ name: habitName, completed: false });
+            habitInput.value = '';
+            updateUserState();
+            renderHabits();
+        });
+
+        clearMonthlyStatsButton.addEventListener('click', () => {
+            if (confirm('确定要清零近一个月的统计数据吗？此操作无法撤销！')) {
+                const history = users[currentUser].history;
+                const now = new Date();
+                users[currentUser].history = history.filter(entry => {
+                    const date = new Date(entry.date);
+                    return (now - date) / (1000 * 60 * 60 * 24) > 30;
+                });
+                updateUserState();
+                renderMonthlyStats();
+                alert('近一个月统计数据已清零');
+            }
+        });
+
+        function renderHabits() {
+            habitList.innerHTML = '';
+            const habits = users[currentUser].habits;
+            habits.forEach((habit, index) => {
+                const li = document.createElement('li');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = habit.completed;
+                checkbox.addEventListener('change', () => {
+                    habit.completed = checkbox.checked;
+                    updateHistory(habit.name, checkbox.checked);
+                    updateUserState();
+                    renderHistory();
+                    renderMonthlyStats();
+                });
+                li.appendChild(checkbox);
+
+                const text = document.createElement('span');
+                text.textContent = habit.name;
+                li.appendChild(text);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '删除';
+                deleteButton.classList.add('delete-habit');
+                deleteButton.addEventListener('click', () => {
+                    if (confirm('确定要删除此习惯吗？')) {
+                        users[currentUser].habits.splice(index, 1);
+                        updateUserState();
+                        renderHabits();
+                    }
+                });
+                li.appendChild(deleteButton);
+
+                habitList.appendChild(li);
+            });
+        }
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+            const history = users[currentUser].history;
+            const stats = {};
+            history.forEach(entry => {
+                if (!stats[entry.habit]) stats[entry.habit] = 0;
+                if (entry.completed) stats[entry.habit]++;
+            });
+
+            for (const habit in stats) {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+
+                const text = document.createElement('span');
+                text.textContent = `${habit}: ${stats[habit]} 次`;
+                li.appendChild(text);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '删除';
+                deleteButton.classList.add('delete-habit');
+                deleteButton.addEventListener('click', () => {
+                    if (confirm(`确定要删除历史记录中关于「${habit}」的所有打卡记录吗？`)) {
+                        users[currentUser].history = users[currentUser].history.filter(entry => entry.habit !== habit);
+                        updateUserState();
+                        renderHistory();
+                    }
+                });
+                li.appendChild(deleteButton);
+
+                historyList.appendChild(li);
+            }
+        }
+
+        function renderMonthlyStats() {
+            monthlyStats.innerHTML = '';
+            const history = users[currentUser].history;
+            const last30Days = history.filter(entry => {
+                const date = new Date(entry.date);
+                const now = new Date();
+                return (now - date) / (1000 * 60 * 60 * 24) <= 30;
+            });
+
+            const stats = {};
+            last30Days.forEach(entry => {
+                if (!stats[entry.habit]) stats[entry.habit] = 0;
+                if (entry.completed) stats[entry.habit]++;
+            });
+
+            for (const habit in stats) {
+                const li = document.createElement('li');
+                li.textContent = `${habit}: ${stats[habit]} 次`;
+                monthlyStats.appendChild(li);
+            }
+        }
+
+        function renderOtherUsersStats() {
+            otherUsersStats.innerHTML = '';
+            for (const username in users) {
+                if (username !== currentUser) {
+                    const user = users[username];
+                    const li = document.createElement('li');
+                    li.textContent = `${user.nickname} 的完成度：${calculateCompletionRate(user.habits)}%`;
+                    otherUsersStats.appendChild(li);
+                }
+            }
+        }
+
+        function calculateCompletionRate(habits) {
+            const completed = habits.filter(habit => habit.completed).length;
+            const total = habits.length;
+            return total > 0 ? Math.round((completed / total) * 100) : 0;
+        }
+
+        function updateHistory(habitName, completed) {
+            const today = new Date().toISOString().split('T')[0];
+            const history = users[currentUser].history;
+            const entry = history.find(h => h.date === today && h.habit === habitName);
+            if (entry) {
+                entry.completed = completed;
+            } else {
+                history.push({ date: today, habit: habitName, completed });
+            }
+            updateUserState();
+        }
+    </script>
+</body>
+</html>
